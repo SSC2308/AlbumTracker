@@ -1,4 +1,4 @@
-import { get, getDupes } from '../state.js'
+import { get, getDupes, on } from '../state.js'
 import { ALL_CODES, TOTAL } from '../data/stickers.js'
 import { addSticker, removeSticker, addDupe, removeDupe } from '../firebase/db.js'
 import { set as setState } from '../state.js'
@@ -145,6 +145,7 @@ export function mount(el) {
   })
 
   updateCounter(el)
+  on(() => updateCounter(el))
 }
 
 function addOne(code) {
