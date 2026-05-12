@@ -46,7 +46,7 @@ export function mount(el) {
         <span class="ing-bulk-arrow" id="alb-compare-arrow">&#9660;</span>
       </div>
       <div id="alb-compare-body" style="display:none">
-        <textarea id="alb-compare-txt" class="bulk-inp" placeholder="MEX: 5, 13, 17&#10;KOR: 7, 16&#10;MEX4 MEX5 BRA16"></textarea>
+        <textarea id="alb-compare-txt" class="bulk-inp" placeholder="MEX 🇲🇽: 5, 13, 17&#10;KOR 🇰🇷: 7, 16"></textarea>
         <button class="btn btn-p btn-full" id="alb-compare-btn" style="margin-top:12px">Ver cuales me sirven</button>
         <div id="alb-compare-result" style="margin-top:16px"></div>
       </div>
