@@ -1,5 +1,5 @@
 import { get, on } from '../state.js'
-import { GROUPS } from '../data/stickers.js'
+import { GROUPS, ALL_CODES } from '../data/stickers.js'
 import { addSticker, removeSticker } from '../firebase/db.js'
 import { set as setState } from '../state.js'
 import { toast } from '../utils/toast.js'
@@ -38,6 +38,18 @@ export function mount(el) {
       <button class="btn btn-s" id="alb-export-pend" style="display:none;width:100%;margin-top:8px">Copiar pendientes al portapapeles</button>
     </div>
     <div id="alb-list"></div>
+
+    <div class="card" id="alb-compare-card" style="display:none">
+      <div class="ing-bulk-toggle" id="alb-compare-toggle">
+        <span class="ing-bulk-label">Comparar con lista de otro</span>
+        <span class="ing-bulk-arrow" id="alb-compare-arrow">&#9660;</span>
+      </div>
+      <div id="alb-compare-body" style="display:none">
+        <textarea id="alb-compare-txt" class="bulk-inp" placeholder="MEX 🇲🇽: 5, 13, 17&#10;KOR 🇰🇷: 7, 16"></textarea>
+        <button class="btn btn-p btn-full" id="alb-compare-btn" style="margin-top:12px">Ver cuales me sirven</button>
+        <div id="alb-compare-result" style="margin-top:16px"></div>
+      </div>
+    </div>
   `
 
   const searchEl = el.querySelector('#alb-search')
@@ -60,11 +72,26 @@ export function mount(el) {
     currentFilter = chip.dataset.filter
     el.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('act'))
     chip.classList.add('act')
-    el.querySelector('#alb-export-pend').style.display = currentFilter === 'pend' ? 'block' : 'none'
+    const isPend = currentFilter === 'pend'
+    el.querySelector('#alb-export-pend').style.display  = isPend ? 'block' : 'none'
+    el.querySelector('#alb-compare-card').style.display = isPend ? 'block' : 'none'
+    if (!isPend) el.querySelector('#alb-compare-result').innerHTML = ''
     render()
   })
 
   el.querySelector('#alb-export-pend').addEventListener('click', exportPending)
+
+  // Collapsible compare
+  let compareOpen = false
+  el.querySelector('#alb-compare-toggle').addEventListener('click', () => {
+    compareOpen = !compareOpen
+    el.querySelector('#alb-compare-body').style.display = compareOpen ? 'block' : 'none'
+    el.querySelector('#alb-compare-arrow').classList.toggle('open', compareOpen)
+  })
+  el.querySelector('#alb-compare-btn').addEventListener('click', () => {
+    const text = el.querySelector('#alb-compare-txt').value
+    renderCompareResult(el, parseAndCompare(text))
+  })
 
   el.querySelector('#alb-jumps').addEventListener('click', e => {
     const btn = e.target.closest('[data-jump]')
@@ -187,6 +214,44 @@ function render() {
         <span>Proba con otro termino o filtro</span>
       </div>`
   }
+}
+
+function parseAndCompare(text) {
+  const collected = get()
+  const lines = text.split('\n').filter(l => l.trim())
+  const matches = []
+  lines.forEach(line => {
+    const upper = line.toUpperCase().replace(/[^A-Z0-9\s]/g, ' ')
+    const teamMatch = upper.match(/\b([A-Z]{2,4})\b/)
+    if (!teamMatch) return
+    const team = teamMatch[1]
+    const numbers = line.match(/\d+/g)
+    if (!numbers) return
+    numbers.forEach(n => {
+      const code = `${team}${n}`
+      if (ALL_CODES.has(code) && !collected.has(code)) matches.push(code)
+    })
+  })
+  return matches
+}
+
+function renderCompareResult(el, matches) {
+  const resultEl = el.querySelector('#alb-compare-result')
+  if (!matches.length) {
+    resultEl.innerHTML = `<p style="color:var(--text-3);font-size:13px">Ninguna de esas me sirve.</p>`
+    return
+  }
+  let html = `<p style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Me sirven — ${matches.length}</p>`
+  html += `<div class="chips-row" style="margin-bottom:16px">`
+  html += matches.map(c => `<span class="chip-tag" style="cursor:default">${c}</span>`).join('')
+  html += `</div>`
+  html += `<button class="btn btn-s" id="alb-compare-copy" style="width:100%">Copiar lista al portapapeles</button>`
+  resultEl.innerHTML = html
+  resultEl.querySelector('#alb-compare-copy').addEventListener('click', () => {
+    navigator.clipboard.writeText(matches.join(' '))
+      .then(() => toast('Lista copiada al portapapeles', 'ok'))
+      .catch(() => toast('No se pudo copiar', 'err'))
+  })
 }
 
 function exportPending() {
