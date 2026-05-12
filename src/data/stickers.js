@@ -1,6 +1,6 @@
 export const GROUPS = [
   { id: 'esp', label: 'Especiales FIFA', teams: [
-    { id: 'FIFA', name: 'FIFA World Cup 2026', flag: '🏆',
+    { id: 'FIFA', name: 'FIFA World Cup 2026', flag: '🌍',
       stickers: ['FWC00','FWC1','FWC2','FWC3','FWC4','FWC5','FWC6','FWC7','FWC8','FWC9','FWC10','FWC11','FWC12','FWC13','FWC14','FWC15','FWC16','FWC17','FWC18','FWC19'] }
   ]},
   { id: 'A', label: 'Grupo A', teams: [

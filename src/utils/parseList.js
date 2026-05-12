@@ -40,15 +40,16 @@ export function parseList(text) {
  * Mantiene el orden de GROUPS y agrupa por equipo.
  */
 export function formatExportList(codes) {
-  const codeSet = codes // puede ser array con repetidos (para dupes)
   const lines = []
 
   GROUPS.forEach(g => {
     g.teams.forEach(t => {
-      const teamCodes = codeSet.filter(c => c.startsWith(t.id))
+      // Derivar el prefijo real de los códigos del equipo (ej. FIFA→FWC, MEX→MEX)
+      const prefix = t.stickers.length ? t.stickers[0].replace(/\d+$/, '') : t.id
+      const teamCodes = codes.filter(c => c.startsWith(prefix))
       if (!teamCodes.length) return
-      const nums = teamCodes.map(c => c.slice(t.id.length))
-      lines.push(`${t.id} ${t.flag}: ${nums.join(', ')}`)
+      const nums = teamCodes.map(c => c.slice(prefix.length))
+      lines.push(`${prefix} ${t.flag}: ${nums.join(', ')}`)
     })
   })
 
