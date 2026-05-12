@@ -1,5 +1,6 @@
 import { get, on } from '../state.js'
-import { GROUPS, ALL_CODES } from '../data/stickers.js'
+import { GROUPS } from '../data/stickers.js'
+import { parseList } from '../utils/parseList.js'
 import { addSticker, removeSticker } from '../firebase/db.js'
 import { set as setState } from '../state.js'
 import { toast } from '../utils/toast.js'
@@ -218,21 +219,7 @@ function render() {
 
 function parseAndCompare(text) {
   const collected = get()
-  const lines = text.split('\n').filter(l => l.trim())
-  const matches = []
-  lines.forEach(line => {
-    const upper = line.toUpperCase().replace(/[^A-Z0-9\s]/g, ' ')
-    const teamMatch = upper.match(/\b([A-Z]{2,4})\b/)
-    if (!teamMatch) return
-    const team = teamMatch[1]
-    const numbers = line.match(/\d+/g)
-    if (!numbers) return
-    numbers.forEach(n => {
-      const code = `${team}${n}`
-      if (ALL_CODES.has(code) && !collected.has(code)) matches.push(code)
-    })
-  })
-  return matches
+  return parseList(text).filter(code => !collected.has(code))
 }
 
 function renderCompareResult(el, matches) {
