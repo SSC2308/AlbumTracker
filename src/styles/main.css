@@ -689,7 +689,7 @@ body {
 }
 .ing-input {
   flex: 1;
-  height: 58px;
+  height: 68px;
   padding: 0 20px;
   background: var(--surface);
   border: 2px solid var(--border);
