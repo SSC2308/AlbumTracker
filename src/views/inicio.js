@@ -1,5 +1,7 @@
 import { get, on } from '../state.js'
 import { GROUPS, TOTAL } from '../data/stickers.js'
+import { migrateOldCodes } from '../firebase/db.js'
+import { toast } from '../utils/toast.js'
 
 const GRP_COLORS = {
   esp:'#d4a44c', A:'#d4725a', B:'#e08a4c', C:'#d4b844', D:'#4ea878',
@@ -67,10 +69,45 @@ export function mount(el) {
       <span class="section-badge" id="i-teams-badge">0/${GROUPS.reduce((a,g)=>a+g.teams.length,0)}</span>
     </div>
     <div id="i-groups"></div>
+
+    <div id="i-migrate-card" class="card" style="display:none;border:1px solid var(--warn);margin-top:8px">
+      <div class="section-hdr" style="margin-bottom:8px">
+        <span class="section-title" style="color:var(--warn)">Codigos desactualizados</span>
+      </div>
+      <p style="font-size:13px;color:var(--text-3);margin-bottom:12px">Se detectaron códigos con nombres viejos (JAP→JPN, FW→FWC). Tocá para corregirlos automáticamente.</p>
+      <button class="btn btn-p btn-full" id="i-migrate-btn">Corregir ahora</button>
+    </div>
   `
 
-  on(update)
+  on(collected => {
+    update(collected)
+    checkMigration(collected)
+  })
   update(get())
+  checkMigration(get())
+
+  el.querySelector('#i-migrate-btn').addEventListener('click', async () => {
+    const btn = el.querySelector('#i-migrate-btn')
+    btn.disabled = true
+    btn.textContent = 'Corrigiendo...'
+    try {
+      const { fixed } = await migrateOldCodes()
+      toast(`${fixed} código${fixed !== 1 ? 's' : ''} corregido${fixed !== 1 ? 's' : ''}`, 'ok')
+      el.querySelector('#i-migrate-card').style.display = 'none'
+    } catch {
+      toast('Error al migrar', 'err')
+      btn.disabled = false
+      btn.textContent = 'Corregir ahora'
+    }
+  })
+}
+
+function checkMigration(collected) {
+  const hasOld = [...collected].some(c =>
+    c === '00' || c.startsWith('JAP') || /^FW\d+$/.test(c)
+  )
+  const card = document.getElementById('i-migrate-card')
+  if (card) card.style.display = hasOld ? 'block' : 'none'
 }
 
 function update(collected) {
