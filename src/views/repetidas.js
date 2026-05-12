@@ -74,15 +74,12 @@ function exportToClipboard() {
   )
   if (!Object.keys(active).length) { toast('No hay repetidas', 'dup'); return }
 
-  // Expandir según count (MEX4 x2 → [MEX4, MEX4])
-  const expanded = []
+  const codes = []
   GROUPS.forEach(g => g.teams.forEach(t => {
-    t.stickers.forEach(s => {
-      if (active[s]) for (let i = 0; i < active[s]; i++) expanded.push(s)
-    })
+    t.stickers.forEach(s => { if (active[s]) codes.push(s) })
   }))
 
-  navigator.clipboard.writeText(formatExportList(expanded))
+  navigator.clipboard.writeText(formatExportList(codes))
     .then(() => toast('Lista copiada al portapapeles', 'ok'))
     .catch(() => toast('No se pudo copiar', 'err'))
 }
