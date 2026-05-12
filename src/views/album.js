@@ -101,6 +101,15 @@ export function onActive() {
   prevCollected = new Set(get())
 }
 
+export function jumpToGroup(groupId) {
+  const target = document.getElementById('alb-group-' + groupId)
+  if (!target) return
+  const sticky = container?.querySelector('.alb-sticky')
+  const offset = sticky ? sticky.offsetHeight + 28 : 0
+  const top = target.getBoundingClientRect().top + window.scrollY - offset
+  window.scrollTo({ top, behavior: 'smooth' })
+}
+
 function render() {
   const filterVal = container?.querySelector('#alb-search')?.value ?? ''
   const fl = filterVal.toLowerCase()

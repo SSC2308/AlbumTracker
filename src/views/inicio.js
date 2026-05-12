@@ -15,7 +15,10 @@ function checkSvg() {
   return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
 }
 
-export function mount(el) {
+let _onGroupClick = null
+
+export function mount(el, { onGroupClick } = {}) {
+  _onGroupClick = onGroupClick || null
   el.innerHTML = `
     <div class="hero">
       <img src="/album.png" alt="Album Panini 2026" class="hero-cover">
@@ -158,7 +161,7 @@ function update(collected) {
     }).join('')
 
     return `
-      <div class="grp-card">
+      <div class="grp-card" data-group="${g.id}" style="cursor:pointer">
         <div class="grp-card-hdr">
           <span class="grp-card-dot" style="background:${color}"></span>
           <span class="grp-card-name">${g.label}</span>
@@ -170,4 +173,10 @@ function update(collected) {
         <div class="grp-card-teams">${teamChips}</div>
       </div>`
   }).join('')
+
+  if (_onGroupClick) {
+    grpEl.querySelectorAll('[data-group]').forEach(card => {
+      card.addEventListener('click', () => _onGroupClick(card.dataset.group))
+    })
+  }
 }
