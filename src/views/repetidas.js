@@ -106,9 +106,9 @@ function renderCompareResult(el, matches) {
       <span>${c}</span>
     </label>`).join('')
   html += `</div>`
-  html += `<div style="display:flex;gap:8px">`
-  html += `<button class="btn btn-s" id="rep-compare-copy" style="flex:1">Copiar seleccionadas</button>`
-  html += `<button class="btn btn-p" id="rep-compare-give" style="flex:1">Dar seleccionadas</button>`
+  html += `<div style="display:flex;flex-direction:column;gap:8px">`
+  html += `<button class="btn btn-s" id="rep-compare-copy">Copiar seleccionadas</button>`
+  html += `<button class="btn btn-p" id="rep-compare-give">Dar seleccionadas</button>`
   html += `</div>`
 
   resultEl.innerHTML = html
