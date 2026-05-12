@@ -23,7 +23,9 @@
       "WebFetch(domain:www.fifplay.com)",
       "Bash(not exist *)",
       "Bash(copy \"C:\\\\Users\\\\Santiago\\\\.claude\\\\projects\\\\F--Documents-MINAEFiles-Album-Mundial\\\\802e8c0f-2a19-4202-aa12-5557d35378ae\\\\tool-results\\\\webfetch-1778193013281-m4nejb.png\" \"F:\\\\Documents\\\\MINAEFiles\\\\Album Mundial\\\\public\\\\logo-wc26.png\")",
-      "Bash(mkdir -p \"F:/Documents/MINAEFiles/Album Mundial/public\" && cp \"C:/Users/Santiago/.claude/projects/F--Documents-MINAEFiles-Album-Mundial/802e8c0f-2a19-4202-aa12-5557d35378ae/tool-results/webfetch-1778193013281-m4nejb.png\" \"F:/Documents/MINAEFiles/Album Mundial/public/logo-wc26.png\" && echo \"Copied\")"
+      "Bash(mkdir -p \"F:/Documents/MINAEFiles/Album Mundial/public\" && cp \"C:/Users/Santiago/.claude/projects/F--Documents-MINAEFiles-Album-Mundial/802e8c0f-2a19-4202-aa12-5557d35378ae/tool-results/webfetch-1778193013281-m4nejb.png\" \"F:/Documents/MINAEFiles/Album Mundial/public/logo-wc26.png\" && echo \"Copied\")",
+      "Bash(git remote *)",
+      "Bash(git add *)"
     ]
   }
 }
