@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:cartophilic-info-exch.blogspot.com)",
+      "WebFetch(domain:www.checklistinsider.com)",
+      "WebFetch(domain:football-sticker-album.fandom.com)",
+      "WebFetch(domain:www.diamondcardsonline.com)",
+      "WebFetch(domain:fiestasconideas.com.ar)",
+      "WebFetch(domain:www.worldtradingcards.com)",
+      "WebFetch(domain:latination.com)",
+      "WebFetch(domain:colombiaone.com)",
+      "WebFetch(domain:sports.yahoo.com)",
+      "WebFetch(domain:www.beckett.com)",
+      "WebFetch(domain:www.fourfourtwo.com)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__computer",
+      "mcp__Claude_in_Chrome__read_console_messages",
+      "WebFetch(domain:www.fifplay.com)",
+      "Bash(not exist *)",
+      "Bash(copy \"C:\\\\Users\\\\Santiago\\\\.claude\\\\projects\\\\F--Documents-MINAEFiles-Album-Mundial\\\\802e8c0f-2a19-4202-aa12-5557d35378ae\\\\tool-results\\\\webfetch-1778193013281-m4nejb.png\" \"F:\\\\Documents\\\\MINAEFiles\\\\Album Mundial\\\\public\\\\logo-wc26.png\")",
+      "Bash(mkdir -p \"F:/Documents/MINAEFiles/Album Mundial/public\" && cp \"C:/Users/Santiago/.claude/projects/F--Documents-MINAEFiles-Album-Mundial/802e8c0f-2a19-4202-aa12-5557d35378ae/tool-results/webfetch-1778193013281-m4nejb.png\" \"F:/Documents/MINAEFiles/Album Mundial/public/logo-wc26.png\" && echo \"Copied\")"
+    ]
+  }
+}

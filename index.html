@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Album Mundial 2026</title>
+  <link rel="stylesheet" href="/src/styles/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+  <nav class="dnav">
+    <img src="/logo-wc26.png" class="logo-img" alt="FIFA World Cup 2026">
+    <div class="nav-links">
+      <button data-view="inicio">Inicio</button>
+      <button data-view="ingresar">Ingresar</button>
+      <button data-view="album">Album</button>
+      <button data-view="camara">Camara</button>
+      <button data-view="repetidas">Repetidas</button>
+    </div>
+    <span class="sync-dot" id="sync-dot"></span>
+  </nav>
+
+  <nav class="mnav">
+    <button data-view="inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10L12 3l9 7v10a1 1 0 01-1 1H4a1 1 0 01-1-1V10z"/><path d="M9 21V13h6v8"/></svg>
+    </button>
+    <button data-view="ingresar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="4"/><line x1="12" y1="7" x2="12" y2="17"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+    </button>
+    <button data-view="album">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="18" rx="1.5"/><rect x="13" y="3" width="8" height="18" rx="1.5"/><line x1="7" y1="8" x2="7" y2="8.01"/><line x1="7" y1="13" x2="7" y2="13.01"/><line x1="7" y1="18" x2="7" y2="18.01"/><line x1="17" y1="8" x2="17" y2="8.01"/><line x1="17" y1="13" x2="17" y2="13.01"/></svg>
+    </button>
+    <button data-view="camara">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="3"/><circle cx="12" cy="13" r="4"/><path d="M8 6l2-2.5h4l2 2.5"/></svg>
+    </button>
+    <button data-view="repetidas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="14" rx="2"/><rect x="8" y="2" width="14" height="14" rx="2"/></svg>
+    </button>
+  </nav>
+
+  <div class="main">
+    <div id="view-inicio"  class="view"></div>
+    <div id="view-ingresar" class="view"></div>
+    <div id="view-album"   class="view"></div>
+    <div id="view-camara"     class="view"></div>
+    <div id="view-repetidas"  class="view"></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
