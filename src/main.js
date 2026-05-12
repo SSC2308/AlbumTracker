@@ -3,7 +3,7 @@ import { subscribe }                from './firebase/db.js'
 import { set as setState, setDupes } from './state.js'
 import { mount as mountInicio }     from './views/inicio.js'
 import { mount as mountIngresar }   from './views/ingresar.js'
-import { mount as mountAlbum, onActive as albumActive, jumpToGroup } from './views/album.js'
+import { mount as mountAlbum, onActive as albumActive, jumpToGroup, jumpToTeam } from './views/album.js'
 import { mount as mountCamara, onLeave as camaraLeave } from './views/camara.js'
 import { mount as mountRepetidas }  from './views/repetidas.js'
 import { mountLogin }               from './views/loginView.js'
@@ -12,7 +12,8 @@ import { getSession, logout }       from './firebase/auth.js'
 function bootApp() {
   // ── Mount all views ──────────────────────────────────────────
   mountInicio(document.getElementById('view-inicio'), {
-    onGroupClick: (groupId) => { nav('album'); setTimeout(() => jumpToGroup(groupId), 50) }
+    onGroupClick: (groupId) => { nav('album'); setTimeout(() => jumpToGroup(groupId), 50) },
+    onTeamClick:  (teamId)  => { nav('album'); setTimeout(() => jumpToTeam(teamId),   50) },
   })
   mountIngresar(document.getElementById('view-ingresar'))
   mountAlbum(document.getElementById('view-album'))

@@ -110,6 +110,18 @@ export function jumpToGroup(groupId) {
   window.scrollTo({ top, behavior: 'smooth' })
 }
 
+export function jumpToTeam(teamId) {
+  // Abrir el equipo si no está abierto
+  if (!openTeams.has(teamId)) toggleTeam(teamId)
+
+  const target = document.getElementById('tc-' + teamId)
+  if (!target) return
+  const sticky = container?.querySelector('.alb-sticky')
+  const offset = sticky ? sticky.offsetHeight + 28 : 0
+  const top = target.getBoundingClientRect().top + window.scrollY - offset
+  window.scrollTo({ top, behavior: 'smooth' })
+}
+
 function render() {
   const filterVal = container?.querySelector('#alb-search')?.value ?? ''
   const fl = filterVal.toLowerCase()

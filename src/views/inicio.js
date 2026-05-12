@@ -16,9 +16,11 @@ function checkSvg() {
 }
 
 let _onGroupClick = null
+let _onTeamClick  = null
 
-export function mount(el, { onGroupClick } = {}) {
+export function mount(el, { onGroupClick, onTeamClick } = {}) {
   _onGroupClick = onGroupClick || null
+  _onTeamClick  = onTeamClick  || null
   el.innerHTML = `
     <div class="hero">
       <img src="/album.png" alt="Album Panini 2026" class="hero-cover">
@@ -157,7 +159,7 @@ function update(collected) {
       const flagHtml = t.id !== 'FIFA'
         ? `<img class="chip-flag-img" src="https://play.fifa.com/media/image/bracket_predictor/flags/world_cup_2026/${t.id}.svg" alt="" loading="lazy">`
         : ''
-      return `<span class="team-chip ${done ? 'done' : ''}">${flagHtml}${t.id} <span style="opacity:.7">${g2}/${t.stickers.length}</span></span>`
+      return `<span class="team-chip ${done ? 'done' : ''}" data-team="${t.id}" style="cursor:pointer">${flagHtml}${t.id} <span style="opacity:.7">${g2}/${t.stickers.length}</span></span>`
     }).join('')
 
     return `
@@ -177,6 +179,15 @@ function update(collected) {
   if (_onGroupClick) {
     grpEl.querySelectorAll('[data-group]').forEach(card => {
       card.addEventListener('click', () => _onGroupClick(card.dataset.group))
+    })
+  }
+
+  if (_onTeamClick) {
+    grpEl.querySelectorAll('[data-team]').forEach(chip => {
+      chip.addEventListener('click', e => {
+        e.stopPropagation() // no disparar el click del grupo
+        _onTeamClick(chip.dataset.team)
+      })
     })
   }
 }
