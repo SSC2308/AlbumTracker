@@ -1,6 +1,6 @@
 import { get, on } from '../state.js'
 import { GROUPS } from '../data/stickers.js'
-import { parseList } from '../utils/parseList.js'
+import { parseList, formatExportList } from '../utils/parseList.js'
 import { addSticker, removeSticker } from '../firebase/db.js'
 import { set as setState } from '../state.js'
 import { toast } from '../utils/toast.js'
@@ -235,7 +235,7 @@ function renderCompareResult(el, matches) {
   html += `<button class="btn btn-s" id="alb-compare-copy" style="width:100%">Copiar lista al portapapeles</button>`
   resultEl.innerHTML = html
   resultEl.querySelector('#alb-compare-copy').addEventListener('click', () => {
-    navigator.clipboard.writeText(matches.join(' '))
+    navigator.clipboard.writeText(formatExportList(matches))
       .then(() => toast('Lista copiada al portapapeles', 'ok'))
       .catch(() => toast('No se pudo copiar', 'err'))
   })
@@ -243,20 +243,12 @@ function renderCompareResult(el, matches) {
 
 function exportPending() {
   const collected = get()
-  const lines = []
-  GROUPS.forEach(g => {
-    const groupLines = []
-    g.teams.forEach(t => {
-      const missing = t.stickers.filter(s => !collected.has(s))
-      if (missing.length) groupLines.push(missing.join(' '))
-    })
-    if (groupLines.length) {
-      lines.push(`— ${g.label} —`)
-      lines.push(...groupLines)
-    }
-  })
-  if (!lines.length) { toast('No hay pendientes', 'ok'); return }
-  navigator.clipboard.writeText(lines.join('\n'))
+  const missing = []
+  GROUPS.forEach(g => g.teams.forEach(t => {
+    t.stickers.forEach(s => { if (!collected.has(s)) missing.push(s) })
+  }))
+  if (!missing.length) { toast('No hay pendientes', 'ok'); return }
+  navigator.clipboard.writeText(formatExportList(missing))
     .then(() => toast('Pendientes copiadas al portapapeles', 'ok'))
     .catch(() => toast('No se pudo copiar', 'err'))
 }

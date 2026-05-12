@@ -1,4 +1,4 @@
-import { ALL_CODES } from '../data/stickers.js'
+import { ALL_CODES, GROUPS } from '../data/stickers.js'
 
 /**
  * Parsea una lista de figuritas en cualquier formato:
@@ -33,4 +33,24 @@ export function parseList(text) {
   })
 
   return results
+}
+
+/**
+ * Formatea un array de códigos al estilo: "MEX 🇲🇽: 4, 5, 17"
+ * Mantiene el orden de GROUPS y agrupa por equipo.
+ */
+export function formatExportList(codes) {
+  const codeSet = codes // puede ser array con repetidos (para dupes)
+  const lines = []
+
+  GROUPS.forEach(g => {
+    g.teams.forEach(t => {
+      const teamCodes = codeSet.filter(c => c.startsWith(t.id))
+      if (!teamCodes.length) return
+      const nums = teamCodes.map(c => c.slice(t.id.length))
+      lines.push(`${t.id} ${t.flag}: ${nums.join(', ')}`)
+    })
+  })
+
+  return lines.join('\n')
 }

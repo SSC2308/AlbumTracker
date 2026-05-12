@@ -1,6 +1,6 @@
 import { getDupes, onDupes } from '../state.js'
 import { GROUPS } from '../data/stickers.js'
-import { parseList } from '../utils/parseList.js'
+import { parseList, formatExportList } from '../utils/parseList.js'
 import { removeDupe } from '../firebase/db.js'
 import { toast } from '../utils/toast.js'
 
@@ -74,25 +74,15 @@ function exportToClipboard() {
   )
   if (!Object.keys(active).length) { toast('No hay repetidas', 'dup'); return }
 
-  const lines = []
-  GROUPS.forEach(g => {
-    const groupLines = []
-    g.teams.forEach(t => {
-      const teamCodes = []
-      t.stickers.forEach(s => {
-        if (active[s]) {
-          for (let i = 0; i < active[s]; i++) teamCodes.push(s)
-        }
-      })
-      if (teamCodes.length) groupLines.push(teamCodes.join(' '))
+  // Expandir según count (MEX4 x2 → [MEX4, MEX4])
+  const expanded = []
+  GROUPS.forEach(g => g.teams.forEach(t => {
+    t.stickers.forEach(s => {
+      if (active[s]) for (let i = 0; i < active[s]; i++) expanded.push(s)
     })
-    if (groupLines.length) {
-      lines.push(`— ${g.label} —`)
-      lines.push(...groupLines)
-    }
-  })
+  }))
 
-  navigator.clipboard.writeText(lines.join('\n'))
+  navigator.clipboard.writeText(formatExportList(expanded))
     .then(() => toast('Lista copiada al portapapeles', 'ok'))
     .catch(() => toast('No se pudo copiar', 'err'))
 }
@@ -129,7 +119,7 @@ function renderCompareResult(el, matches) {
   resultEl.querySelector('#rep-compare-copy').addEventListener('click', () => {
     const selected = [...resultEl.querySelectorAll('.rep-give-chk:checked')].map(c => c.value)
     if (!selected.length) { toast('Nada seleccionado', 'dup'); return }
-    navigator.clipboard.writeText(selected.join(' '))
+    navigator.clipboard.writeText(formatExportList(selected))
       .then(() => toast('Lista copiada al portapapeles', 'ok'))
       .catch(() => toast('No se pudo copiar', 'err'))
   })
