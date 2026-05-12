@@ -12,7 +12,8 @@ export function mountLogin(onSuccess) {
           placeholder="Usuario" autocomplete="username"
           autocorrect="off" autocapitalize="off" spellcheck="false">
         <input id="login-pass" class="ing-input" type="password"
-          placeholder="Contraseña" autocomplete="current-password">
+          placeholder="Contraseña" autocomplete="current-password"
+          autocapitalize="off" autocorrect="off">
       </div>
       <div id="login-err" class="login-err" style="display:none"></div>
       <button class="btn btn-p btn-full" id="login-btn" style="margin-top:4px">Entrar</button>
