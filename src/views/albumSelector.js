@@ -1,3 +1,13 @@
+const ALBUM_KEY = 'album_selected'
+
+export function getSelectedAlbum() {
+  return localStorage.getItem(ALBUM_KEY)
+}
+
+export function clearSelectedAlbum() {
+  localStorage.removeItem(ALBUM_KEY)
+}
+
 export function mountAlbumSelector(onSelect) {
   const overlay = document.createElement('div')
   overlay.id = 'album-selector-overlay'
@@ -27,6 +37,7 @@ export function mountAlbumSelector(onSelect) {
   document.body.appendChild(overlay)
 
   overlay.querySelector('#als-wc2026').addEventListener('click', () => {
+    localStorage.setItem(ALBUM_KEY, 'wc2026')
     overlay.classList.add('als-fade-out')
     overlay.addEventListener('transitionend', () => {
       overlay.remove()

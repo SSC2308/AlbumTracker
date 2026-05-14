@@ -7,7 +7,7 @@ import { mount as mountAlbum, onActive as albumActive, jumpToGroup, jumpToTeam }
 import { mount as mountCamara, onLeave as camaraLeave } from './views/camara.js'
 import { mount as mountRepetidas }  from './views/repetidas.js'
 import { mountLogin }               from './views/loginView.js'
-import { mountAlbumSelector }       from './views/albumSelector.js'
+import { mountAlbumSelector, getSelectedAlbum, clearSelectedAlbum } from './views/albumSelector.js'
 import { getSession, logout }       from './firebase/auth.js'
 
 function bootApp() {
@@ -43,6 +43,13 @@ function bootApp() {
   const logoutBtn = document.getElementById('logout-btn')
   if (logoutBtn) logoutBtn.addEventListener('click', logout)
 
+  // ── Volver a mis albums ───────────────────────────────────────
+  const backBtn = document.getElementById('nav-back-albums')
+  if (backBtn) backBtn.addEventListener('click', () => {
+    clearSelectedAlbum()
+    location.reload()
+  })
+
   // ── Navigation ───────────────────────────────────────────────
   let current = null
 
@@ -66,7 +73,12 @@ function bootApp() {
 }
 
 // ── Auth gate ────────────────────────────────────────────────
-if (getSession()) {
+const session = getSession()
+const album   = getSelectedAlbum()
+
+if (session && album) {
+  bootApp()
+} else if (session) {
   mountAlbumSelector(() => bootApp())
 } else {
   mountLogin(() => mountAlbumSelector(() => bootApp()))
