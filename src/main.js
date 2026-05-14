@@ -22,15 +22,21 @@ function bootApp() {
 
   // ── Firebase real-time sync ──────────────────────────────────
   const syncDot = document.getElementById('sync-dot')
+  const demoMode = new URLSearchParams(location.search).has('demo')
 
-  subscribe((collected, dupes) => {
-    setState(collected)
-    setDupes(dupes)
-    if (syncDot) { syncDot.className = 'sync-dot ok'; syncDot.title = `Sincronizado — ${collected.size} figuritas` }
-  })
-
-  // Show connecting state until first snapshot
-  if (syncDot) { syncDot.className = 'sync-dot busy'; syncDot.title = 'Conectando...' }
+  if (demoMode) {
+    // Modo demo: estado vacio, sin conectar a Firebase
+    setState(new Set())
+    setDupes({})
+    if (syncDot) { syncDot.className = 'sync-dot'; syncDot.title = 'Modo demo' }
+  } else {
+    subscribe((collected, dupes) => {
+      setState(collected)
+      setDupes(dupes)
+      if (syncDot) { syncDot.className = 'sync-dot ok'; syncDot.title = `Sincronizado — ${collected.size} figuritas` }
+    })
+    if (syncDot) { syncDot.className = 'sync-dot busy'; syncDot.title = 'Conectando...' }
+  }
 
   // ── Logout button ─────────────────────────────────────────────
   const logoutBtn = document.getElementById('logout-btn')
