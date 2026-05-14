@@ -7,6 +7,7 @@ import { mount as mountAlbum, onActive as albumActive, jumpToGroup, jumpToTeam }
 import { mount as mountCamara, onLeave as camaraLeave } from './views/camara.js'
 import { mount as mountRepetidas }  from './views/repetidas.js'
 import { mountLogin }               from './views/loginView.js'
+import { mountAlbumSelector }       from './views/albumSelector.js'
 import { getSession, logout }       from './firebase/auth.js'
 
 function bootApp() {
@@ -66,7 +67,7 @@ function bootApp() {
 
 // ── Auth gate ────────────────────────────────────────────────
 if (getSession()) {
-  bootApp()
+  mountAlbumSelector(() => bootApp())
 } else {
-  mountLogin(bootApp)
+  mountLogin(() => mountAlbumSelector(() => bootApp()))
 }
