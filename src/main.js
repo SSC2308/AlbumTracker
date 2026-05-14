@@ -43,12 +43,19 @@ function bootApp() {
   const logoutBtn = document.getElementById('logout-btn')
   if (logoutBtn) logoutBtn.addEventListener('click', logout)
 
-  // ── Volver a mis albums ───────────────────────────────────────
-  const backBtn = document.getElementById('nav-back-albums')
-  if (backBtn) backBtn.addEventListener('click', () => {
-    clearSelectedAlbum()
-    location.reload()
-  })
+  // ── Long press en home → volver a mis albums ─────────────────
+  const homeBtn = document.querySelector('.mnav [data-view="inicio"]')
+  if (homeBtn) {
+    let pressTimer = null
+    homeBtn.addEventListener('pointerdown', () => {
+      pressTimer = setTimeout(() => {
+        clearSelectedAlbum()
+        location.reload()
+      }, 600)
+    })
+    homeBtn.addEventListener('pointerup',    () => clearTimeout(pressTimer))
+    homeBtn.addEventListener('pointerleave', () => clearTimeout(pressTimer))
+  }
 
   // ── Navigation ───────────────────────────────────────────────
   let current = null
