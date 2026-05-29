@@ -1,7 +1,7 @@
-import { get, getDupes, onDupes, set as setState } from '../state.js'
+import { get, getDupes, onDupes, getTrades, onTrades, set as setState } from '../state.js'
 import { GROUPS, ALL_CODES } from '../data/stickers.js'
 import { parseList, formatExportList } from '../utils/parseList.js'
-import { addSticker, addDupe, removeDupe } from '../firebase/db.js'
+import { addSticker, addDupe, removeDupe, savePendingTrade, completeTrade, cancelTrade } from '../firebase/db.js'
 import { toast } from '../utils/toast.js'
 
 const GROUP_COLORS = {
@@ -36,6 +36,8 @@ export function mount(el) {
       <p>No tengo repetidas</p>
     </div>
 
+    <div id="rep-pending-trades"></div>
+
     <div class="card" id="rep-trade-card">
       <div class="ing-bulk-toggle" id="rep-trade-toggle">
         <span class="ing-bulk-label">Nuevo intercambio</span>
@@ -65,7 +67,7 @@ export function mount(el) {
         <div id="rep-trade-recv-result" style="margin-top:12px"></div>
 
         <button class="btn btn-p btn-full" id="rep-trade-confirm" style="margin-top:20px">
-          ✓ Confirmar intercambio
+          Crear intercambio
         </button>
       </div>
     </div>
@@ -89,10 +91,12 @@ export function mount(el) {
     const text = el.querySelector('#rep-trade-recv-txt').value
     renderTradeRecv(el, parseList(text))
   })
-  el.querySelector('#rep-trade-confirm').addEventListener('click', () => confirmTrade(el))
+  el.querySelector('#rep-trade-confirm').addEventListener('click', () => createTrade(el))
 
   onDupes(() => render())
+  onTrades(() => renderPendingTrades(el))
   render()
+  renderPendingTrades(el)
 }
 
 function exportToClipboard() {
@@ -173,46 +177,110 @@ function renderTradeRecv(el, codes) {
   resultEl.innerHTML = html
 }
 
-/* ── Trade: confirmar ── */
-function confirmTrade(el) {
+/* ── Trade: crear (guarda pendiente, no mueve figuritas) ── */
+function createTrade(el) {
   const name = el.querySelector('#rep-trade-name').value.trim()
+  if (!name) { toast('Ponele un nombre al intercambio', 'err'); return }
 
   const give = [...el.querySelectorAll('.trade-give-chk:checked')].map(c => c.value)
   const recv = parseList(el.querySelector('#rep-trade-recv-txt').value)
 
-  if (!give.length && !recv.length) { toast('Nada para confirmar', 'dup'); return }
+  if (!give.length && !recv.length) { toast('Nada para guardar', 'dup'); return }
 
-  // Dar: bajar repetidas seleccionadas
-  give.forEach(code => {
+  savePendingTrade({ partner: name, gave: give, received: recv })
+    .then(() => toast(`Intercambio con ${name} guardado`, 'ok'))
+    .catch(() => toast('Error al guardar', 'err'))
+
+  // Resetear formulario
+  el.querySelector('#rep-trade-name').value            = ''
+  el.querySelector('#rep-trade-give-txt').value        = ''
+  el.querySelector('#rep-trade-recv-txt').value        = ''
+  el.querySelector('#rep-trade-give-result').innerHTML = ''
+  el.querySelector('#rep-trade-recv-result').innerHTML = ''
+}
+
+/* ── Trade: ejecutar cuando el intercambio físico se hace ── */
+function executeTrade(id, trade) {
+  // Dar: bajar repetidas
+  trade.gave.forEach(code => {
     if ((getDupes()[code] ?? 0) > 0) removeDupe(code)
   })
 
   // Recibir: agregar al album o como repetida
   const collected = get()
   const next = new Set(collected)
-  recv.forEach(code => {
+  trade.received.forEach(code => {
     if (!ALL_CODES.has(code)) return
-    if (collected.has(code)) {
-      addDupe(code)
-    } else {
-      next.add(code)
-      addSticker(code)
-    }
+    if (collected.has(code)) { addDupe(code) }
+    else { next.add(code); addSticker(code) }
   })
   if (next.size > collected.size) setState(next)
 
-  // Resumen
-  const parts = []
-  if (give.length) parts.push(`${give.length} dada${give.length > 1 ? 's' : ''}`)
-  if (recv.length) parts.push(`${recv.length} recibida${recv.length > 1 ? 's' : ''}`)
-  toast(`Intercambio${name ? ` con ${name}` : ''} — ${parts.join(', ')}`, 'ok')
+  completeTrade(id)
 
-  // Resetear formulario
-  el.querySelector('#rep-trade-name').value        = ''
-  el.querySelector('#rep-trade-give-txt').value    = ''
-  el.querySelector('#rep-trade-recv-txt').value    = ''
-  el.querySelector('#rep-trade-give-result').innerHTML = ''
-  el.querySelector('#rep-trade-recv-result').innerHTML = ''
+  const parts = []
+  if (trade.gave.length)     parts.push(`${trade.gave.length} dada${trade.gave.length > 1 ? 's' : ''}`)
+  if (trade.received.length) parts.push(`${trade.received.length} recibida${trade.received.length > 1 ? 's' : ''}`)
+  toast(`Intercambio con ${trade.partner} confirmado — ${parts.join(', ')}`, 'ok')
+}
+
+/* ── Pending trades list ── */
+function renderPendingTrades(el) {
+  const pending = el.querySelector('#rep-pending-trades')
+  if (!pending) return
+
+  const trades = getTrades()
+  const list = Object.entries(trades)
+    .filter(([, t]) => t.status === 'pending')
+    .sort(([a], [b]) => Number(a) - Number(b))
+
+  if (!list.length) { pending.innerHTML = ''; return }
+
+  const fmt = (iso) => new Date(iso).toLocaleDateString('es', { day: '2-digit', month: '2-digit' })
+
+  let html = `<p style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 8px">
+    Intercambios pendientes
+  </p>`
+
+  list.forEach(([id, t]) => {
+    html += `
+      <div class="card trade-pending-card" data-id="${id}">
+        <div class="trade-pending-header">
+          <span class="trade-pending-name">${t.partner}</span>
+          <span class="trade-pending-date">${fmt(t.ts)}</span>
+        </div>
+        ${t.gave.length ? `
+          <div class="trade-pending-row">
+            <span class="trade-pending-lbl">Doy</span>
+            <span class="trade-pending-codes">${t.gave.join(', ')}</span>
+          </div>` : ''}
+        ${t.received.length ? `
+          <div class="trade-pending-row">
+            <span class="trade-pending-lbl">Recibo</span>
+            <span class="trade-pending-codes">${t.received.join(', ')}</span>
+          </div>` : ''}
+        <div class="trade-pending-actions">
+          <button class="btn btn-p trade-confirm-btn" data-id="${id}">✓ Confirmar</button>
+          <button class="btn btn-s trade-cancel-btn" data-id="${id}">Cancelar</button>
+        </div>
+      </div>`
+  })
+
+  pending.innerHTML = html
+
+  pending.querySelectorAll('.trade-confirm-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id
+      executeTrade(id, trades[id])
+    })
+  })
+
+  pending.querySelectorAll('.trade-cancel-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cancelTrade(btn.dataset.id)
+      toast('Intercambio cancelado', 'dup')
+    })
+  })
 }
 
 function render() {

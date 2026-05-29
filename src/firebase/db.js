@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import {
   getFirestore, doc, onSnapshot, getDoc,
-  setDoc, arrayUnion, arrayRemove, increment,
+  setDoc, updateDoc, arrayUnion, arrayRemove, increment,
 } from 'firebase/firestore'
 
 const app = initializeApp({
@@ -21,11 +21,11 @@ const REF = doc(db, 'albums', 'mundial2026')
  * Callback receives a Set<string> of collected codes.
  * Returns the Firestore unsubscribe function.
  */
-/** cb(collected: Set<string>, dupes: {code: count}) */
+/** cb(collected: Set<string>, dupes: {code: count}, trades: {id: trade}) */
 export const subscribe = (cb) =>
   onSnapshot(REF, snap => {
     const data = snap.data() ?? {}
-    cb(new Set(data.collected ?? []), data.dupes ?? {})
+    cb(new Set(data.collected ?? []), data.dupes ?? {}, data.trades ?? {})
   })
 
 /**
@@ -41,6 +41,23 @@ export const removeSticker = (code) =>
 /** Repetidas — usa Firestore increment para no pisar escrituras concurrentes */
 export const addDupe    = (code) => setDoc(REF, { dupes: { [code]: increment(1)  } }, { merge: true })
 export const removeDupe = (code) => setDoc(REF, { dupes: { [code]: increment(-1) } }, { merge: true })
+
+/** Intercambios */
+export function savePendingTrade({ partner, gave, received }) {
+  const id = Date.now().toString()
+  return updateDoc(REF, {
+    [`trades.${id}`]: { partner, gave, received, status: 'pending', ts: new Date().toISOString() }
+  })
+}
+
+export const completeTrade = (id) =>
+  updateDoc(REF, {
+    [`trades.${id}.status`]:       'done',
+    [`trades.${id}.ts_confirmed`]: new Date().toISOString(),
+  })
+
+export const cancelTrade = (id) =>
+  updateDoc(REF, { [`trades.${id}.status`]: 'cancelled' })
 
 /** Migración de códigos renombrados */
 export async function migrateOldCodes() {

@@ -1,6 +1,6 @@
 import './styles/main.css'
 import { subscribe }                from './firebase/db.js'
-import { set as setState, setDupes } from './state.js'
+import { set as setState, setDupes, setTrades } from './state.js'
 import { mount as mountInicio }     from './views/inicio.js'
 import { mount as mountIngresar }   from './views/ingresar.js'
 import { mount as mountAlbum, onActive as albumActive, jumpToGroup, jumpToTeam } from './views/album.js'
@@ -31,13 +31,14 @@ function bootApp() {
     setDupes({})
     if (syncDot) { syncDot.className = 'sync-dot'; syncDot.title = 'Modo demo' }
   } else {
-    subscribe((collected, dupes) => {
+    subscribe((collected, dupes, trades) => {
       // Sanitize: drop any negative or zero counts that may have leaked in
       const cleanDupes = Object.fromEntries(
         Object.entries(dupes).filter(([, n]) => n > 0)
       )
       setState(collected)
       setDupes(cleanDupes)
+      setTrades(trades)
       if (syncDot) { syncDot.className = 'sync-dot ok'; syncDot.title = `Sincronizado — ${collected.size} figuritas` }
     })
     if (syncDot) { syncDot.className = 'sync-dot busy'; syncDot.title = 'Conectando...' }
