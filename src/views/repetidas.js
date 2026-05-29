@@ -116,10 +116,33 @@ function exportToClipboard() {
     .catch(() => toast('No se pudo copiar', 'err'))
 }
 
-function compareList(text) {
+// Cuántas de cada código están comprometidas en intercambios pendientes
+function getCommitted() {
+  const committed = {}
+  Object.values(getTrades())
+    .filter(t => t.status === 'pending')
+    .forEach(t => t.gave.forEach(code => {
+      committed[code] = (committed[code] ?? 0) + 1
+    }))
+  return committed
+}
+
+// Dupes reales disponibles (total - comprometidas en pendientes)
+function getAvailable() {
   const dupes     = getDupes()
+  const committed = getCommitted()
+  const available = {}
+  for (const [code, n] of Object.entries(dupes)) {
+    const avail = n - (committed[code] ?? 0)
+    if (avail > 0) available[code] = avail
+  }
+  return available
+}
+
+function compareList(text) {
+  const available = getAvailable()
   const collected = get()
-  return parseList(text).filter(code => (dupes[code] ?? 0) > 0 && collected.has(code))
+  return parseList(text).filter(code => (available[code] ?? 0) > 0 && collected.has(code))
 }
 
 
@@ -127,18 +150,22 @@ function compareList(text) {
 function renderTradeGive(el, matches) {
   const resultEl = el.querySelector('#rep-trade-give-result')
   if (!matches.length) {
-    resultEl.innerHTML = `<p style="color:var(--text-3);font-size:13px">No tengo ninguna repetida de esa lista.</p>`
+    resultEl.innerHTML = `<p style="color:var(--text-3);font-size:13px">No tengo ninguna repetida disponible de esa lista.</p>`
     return
   }
+  const available = getAvailable()
   let html = `<p style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
     Puedo darle — ${matches.length}
   </p>`
   html += `<div style="display:flex;flex-wrap:wrap;gap:8px">`
-  html += matches.map(c => `
+  html += matches.map(c => {
+    const avail = available[c] ?? 0
+    return `
     <label class="rep-give-label">
       <input type="checkbox" class="trade-give-chk" value="${c}" checked style="accent-color:var(--accent)">
-      <span>${c}</span>
-    </label>`).join('')
+      <span>${c}</span>${avail > 1 ? `<span style="font-size:10px;color:var(--text-3)">×${avail} disp.</span>` : ''}
+    </label>`
+  }).join('')
   html += `</div>`
   resultEl.innerHTML = html
 }
@@ -229,12 +256,21 @@ function renderPendingTrades(el) {
   const pending = el.querySelector('#rep-pending-trades')
   if (!pending) return
 
-  const trades = getTrades()
+  const trades    = getTrades()
+  const dupes     = getDupes()
   const list = Object.entries(trades)
     .filter(([, t]) => t.status === 'pending')
     .sort(([a], [b]) => Number(a) - Number(b))
 
   if (!list.length) { pending.innerHTML = ''; return }
+
+  // Detectar conflictos: códigos comprometidos más veces que las repetidas disponibles
+  const committed = getCommitted()
+  const conflictCodes = new Set(
+    Object.entries(committed).filter(([code, n]) => n > (dupes[code] ?? 0)).map(([code]) => code)
+  )
+  // Un intercambio tiene conflicto si alguno de sus "doy" está en conflicto
+  const hasConflict = (t) => t.gave.some(c => conflictCodes.has(c))
 
   const fmt = (iso) => new Date(iso).toLocaleDateString('es', { day: '2-digit', month: '2-digit' })
 
@@ -243,16 +279,20 @@ function renderPendingTrades(el) {
   </p>`
 
   list.forEach(([id, t]) => {
+    const conflict = hasConflict(t)
     html += `
-      <div class="card trade-pending-card" data-id="${id}">
+      <div class="card trade-pending-card${conflict ? ' trade-conflict' : ''}" data-id="${id}">
         <div class="trade-pending-header">
           <span class="trade-pending-name">${t.partner}</span>
           <span class="trade-pending-date">${fmt(t.ts)}</span>
         </div>
+        ${conflict ? `<p class="trade-conflict-msg">⚠️ Figurita comprometida en otro intercambio</p>` : ''}
         ${t.gave.length ? `
           <div class="trade-pending-row">
             <span class="trade-pending-lbl">Doy</span>
-            <span class="trade-pending-codes">${t.gave.join(', ')}</span>
+            <span class="trade-pending-codes">${t.gave.map(c =>
+              `<span${conflictCodes.has(c) ? ' class="trade-conflict-code"' : ''}>${c}</span>`
+            ).join(', ')}</span>
           </div>` : ''}
         ${t.received.length ? `
           <div class="trade-pending-row">

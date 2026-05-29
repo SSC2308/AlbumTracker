@@ -1313,6 +1313,13 @@ body {
   gap: 8px;
   margin-top: 12px;
 }
+.trade-conflict { border-left-color: var(--warn); }
+.trade-conflict-msg {
+  font-size: 12px;
+  color: var(--warn);
+  margin-bottom: 6px;
+}
+.trade-conflict-code { color: var(--warn); font-weight: 700; }
 
 .rep-empty {
   text-align: center;
