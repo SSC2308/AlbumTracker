@@ -196,13 +196,158 @@ body {
   position: fixed;
   inset: 0;
   background: var(--bg);
+  background-image: radial-gradient(ellipse 80% 60% at 50% 0%, #d4a44c18 0%, transparent 70%);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: auto;
   z-index: 9999;
-  transition: opacity .3s;
+  padding: 24px 16px 48px;
+  transition: opacity .35s;
 }
 #login-overlay.login-fade-out { opacity: 0; pointer-events: none }
+
+.login-wrap {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+/* Header */
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.login-logo {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 22px;
+  background: #fff;
+  padding: 8px;
+  box-shadow: 0 8px 32px #0006;
+}
+.login-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-1);
+  margin: 0;
+  letter-spacing: -.3px;
+}
+.login-sub {
+  font-size: 13px;
+  color: var(--text-3);
+  margin: 0;
+}
+
+/* Card */
+.login-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px 20px 28px;
+  box-shadow: 0 4px 40px #0004;
+}
+
+/* Tabs */
+.login-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-raised);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+}
+.login-tab {
+  flex: 1;
+  padding: 9px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  font-family: inherit;
+}
+.login-tab.act {
+  background: var(--accent);
+  color: #000;
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.login-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.login-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg-raised);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-1);
+  font-size: 15px;
+  font-family: inherit;
+  padding: 13px 14px;
+  outline: none;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+.login-input::placeholder { color: var(--text-3); }
+.login-input:focus { border-color: var(--accent); }
+
+/* Error */
+.login-err {
+  background: var(--err-lo);
+  color: var(--err);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+/* Submit button */
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 4px;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  -webkit-appearance: none;
+}
+.login-btn:hover  { opacity: .9; }
+.login-btn:active { transform: scale(.98); }
+.login-btn:disabled { opacity: .5; cursor: default; }
 
 /* ═══════════════════════════════════════════
    ALBUM SELECTOR
@@ -300,69 +445,6 @@ body {
   color: var(--text-3);
   border: 2px dashed var(--border);
   border-radius: 10px;
-}
-.login-box {
-  width: 100%;
-  max-width: 360px;
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-.login-logo {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  border-radius: 16px;
-  background: #fff;
-  padding: 8px;
-}
-.login-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-}
-.login-fields {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.login-err {
-  width: 100%;
-  background: var(--err-lo);
-  color: var(--err);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 10px 14px;
-  border-radius: 10px;
-  text-align: center;
-}
-.login-tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--bg-raised);
-  border-radius: 10px;
-  padding: 4px;
-  margin-bottom: 20px;
-}
-.login-tab {
-  flex: 1;
-  padding: 8px;
-  border-radius: 7px;
-  border: none;
-  background: transparent;
-  color: var(--text-3);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .15s, color .15s;
-}
-.login-tab.act {
-  background: var(--surface);
-  color: var(--text-1);
 }
 
 /* ═══════════════════════════════════════════
