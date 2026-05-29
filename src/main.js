@@ -99,7 +99,7 @@ onAuth(async user => {
       if (migrated) toast('Datos migrados correctamente', 'ok')
       bootApp()
     } else {
-      mountAlbumSelector((albumId) => {
+      mountAlbumSelector(user.uid, (albumId) => {
         initDb(user.uid, albumId)
         migrateFromLegacy()
         bootApp()

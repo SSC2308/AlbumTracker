@@ -1,14 +1,14 @@
+import { firebaseApp } from '../firebase/app.js'
+import { getFirestore, doc, getDoc } from 'firebase/firestore'
+import { TOTAL } from '../data/stickers.js'
+
+const db      = getFirestore(firebaseApp)
 const ALBUM_KEY = 'album_selected'
 
-export function getSelectedAlbum() {
-  return localStorage.getItem(ALBUM_KEY)
-}
+export function getSelectedAlbum()  { return localStorage.getItem(ALBUM_KEY) }
+export function clearSelectedAlbum() { localStorage.removeItem(ALBUM_KEY) }
 
-export function clearSelectedAlbum() {
-  localStorage.removeItem(ALBUM_KEY)
-}
-
-export function mountAlbumSelector(onSelect) {
+export function mountAlbumSelector(uid, onSelect) {
   const overlay = document.createElement('div')
   overlay.id = 'album-selector-overlay'
   overlay.innerHTML = `
@@ -22,7 +22,13 @@ export function mountAlbumSelector(onSelect) {
         <button class="als-card" id="als-wc2026">
           <img src="/album.png" class="als-card-img" alt="FIFA World Cup 2026">
           <span class="als-card-name">FIFA World Cup 2026</span>
-          <span class="als-card-sub">Panini</span>
+          <span class="als-card-sub">Panini · ${TOTAL} figuritas</span>
+          <div class="als-progress-wrap">
+            <div class="als-progress-bar">
+              <div class="als-progress-fill" id="als-fill-wc2026" style="width:0%"></div>
+            </div>
+            <span class="als-progress-txt" id="als-txt-wc2026">—</span>
+          </div>
         </button>
 
         <button class="als-card als-card-add" disabled>
@@ -35,6 +41,18 @@ export function mountAlbumSelector(onSelect) {
     </div>
   `
   document.body.appendChild(overlay)
+
+  // Cargar progreso de cada album
+  if (uid) {
+    getDoc(doc(db, 'users', uid, 'albums', 'wc2026')).then(snap => {
+      const collected = (snap.data()?.collected ?? []).length
+      const pct = Math.round((collected / TOTAL) * 100)
+      const fill = overlay.querySelector('#als-fill-wc2026')
+      const txt  = overlay.querySelector('#als-txt-wc2026')
+      if (fill) fill.style.width = pct + '%'
+      if (txt)  txt.textContent  = `${collected} / ${TOTAL} · ${pct}%`
+    }).catch(() => {})
+  }
 
   overlay.querySelector('#als-wc2026').addEventListener('click', () => {
     localStorage.setItem(ALBUM_KEY, 'wc2026')
