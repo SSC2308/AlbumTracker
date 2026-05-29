@@ -45,7 +45,7 @@ export function mountAlbumSelector(uid, onSelect) {
   // Cargar progreso de cada album
   if (uid) {
     getDoc(doc(db, 'users', uid, 'albums', 'wc2026')).then(snap => {
-      const collected = (snap.data()?.collected ?? []).filter(c => ALL_CODES.has(c)).length
+      const collected = new Set((snap.data()?.collected ?? []).filter(c => ALL_CODES.has(c))).size
       const pct = Math.min(100, Math.round((collected / TOTAL) * 100))
       const fill = overlay.querySelector('#als-fill-wc2026')
       const txt  = overlay.querySelector('#als-txt-wc2026')
