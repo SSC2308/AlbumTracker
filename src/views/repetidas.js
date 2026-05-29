@@ -36,18 +36,6 @@ export function mount(el) {
       <p>No tengo repetidas</p>
     </div>
 
-    <div class="card" id="rep-compare-card">
-      <div class="ing-bulk-toggle" id="rep-compare-toggle">
-        <span class="ing-bulk-label">Comparar con lista de otro</span>
-        <span class="ing-bulk-arrow" id="rep-compare-arrow">&#9660;</span>
-      </div>
-      <div id="rep-compare-body" style="display:none">
-        <textarea id="rep-compare-txt" class="bulk-inp" placeholder="MEX 🇲🇽: 5, 13, 17&#10;KOR 🇰🇷: 7, 16"></textarea>
-        <button class="btn btn-p btn-full" id="rep-compare-btn" style="margin-top:12px">Ver cuales tengo</button>
-        <div id="rep-compare-result" style="margin-top:16px"></div>
-      </div>
-    </div>
-
     <div class="card" id="rep-trade-card">
       <div class="ing-bulk-toggle" id="rep-trade-toggle">
         <span class="ing-bulk-label">Nuevo intercambio</span>
@@ -84,19 +72,6 @@ export function mount(el) {
   `
 
   el.querySelector('#rep-export').addEventListener('click', exportToClipboard)
-
-  // Collapsible compare
-  let compareOpen = false
-  el.querySelector('#rep-compare-toggle').addEventListener('click', () => {
-    compareOpen = !compareOpen
-    el.querySelector('#rep-compare-body').style.display = compareOpen ? 'block' : 'none'
-    el.querySelector('#rep-compare-arrow').classList.toggle('open', compareOpen)
-  })
-  el.querySelector('#rep-compare-btn').addEventListener('click', () => {
-    const text = el.querySelector('#rep-compare-txt').value
-    const matches = compareList(text)
-    renderCompareResult(el, matches)
-  })
 
   // Collapsible trade
   let tradeOpen = false
@@ -143,49 +118,6 @@ function compareList(text) {
   return parseList(text).filter(code => (dupes[code] ?? 0) > 0 && collected.has(code))
 }
 
-function renderCompareResult(el, matches) {
-  const resultEl = el.querySelector('#rep-compare-result')
-  if (!matches.length) {
-    resultEl.innerHTML = `<p style="color:var(--text-3);font-size:13px">No tengo ninguna repetida de su lista.</p>`
-    return
-  }
-
-  let html = `<p style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
-    Tengo para darle — ${matches.length}
-  </p>`
-  html += `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">`
-  html += matches.map(c => `
-    <label class="rep-give-label">
-      <input type="checkbox" class="rep-give-chk" value="${c}" checked style="accent-color:var(--accent)">
-      <span>${c}</span>
-    </label>`).join('')
-  html += `</div>`
-  html += `<div style="display:flex;flex-direction:column;gap:8px">`
-  html += `<button class="btn btn-s" id="rep-compare-copy">Copiar seleccionadas</button>`
-  html += `<button class="btn btn-p" id="rep-compare-give">Dar seleccionadas</button>`
-  html += `</div>`
-
-  resultEl.innerHTML = html
-
-  resultEl.querySelector('#rep-compare-copy').addEventListener('click', () => {
-    const selected = [...resultEl.querySelectorAll('.rep-give-chk:checked')].map(c => c.value)
-    if (!selected.length) { toast('Nada seleccionado', 'dup'); return }
-    navigator.clipboard.writeText(formatExportList(selected))
-      .then(() => toast('Lista copiada al portapapeles', 'ok'))
-      .catch(() => toast('No se pudo copiar', 'err'))
-  })
-
-  resultEl.querySelector('#rep-compare-give').addEventListener('click', () => {
-    const selected = [...resultEl.querySelectorAll('.rep-give-chk:checked')].map(c => c.value)
-    if (!selected.length) { toast('Nada seleccionado', 'dup'); return }
-    selected.forEach(code => {
-      if ((getDupes()[code] ?? 0) > 0) removeDupe(code)
-    })
-    toast(`${selected.length} repetida${selected.length > 1 ? 's' : ''} eliminada${selected.length > 1 ? 's' : ''}`, 'ok')
-    resultEl.innerHTML = ''
-    el.querySelector('#rep-compare-txt').value = ''
-  })
-}
 
 /* ── Trade: lo que doy ── */
 function renderTradeGive(el, matches) {
