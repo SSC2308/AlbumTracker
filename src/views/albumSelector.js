@@ -1,6 +1,6 @@
 import { firebaseApp } from '../firebase/app.js'
 import { getFirestore, doc, getDoc } from 'firebase/firestore'
-import { TOTAL } from '../data/stickers.js'
+import { ALL_CODES, TOTAL } from '../data/stickers.js'
 
 const db      = getFirestore(firebaseApp)
 const ALBUM_KEY = 'album_selected'
@@ -45,8 +45,8 @@ export function mountAlbumSelector(uid, onSelect) {
   // Cargar progreso de cada album
   if (uid) {
     getDoc(doc(db, 'users', uid, 'albums', 'wc2026')).then(snap => {
-      const collected = (snap.data()?.collected ?? []).length
-      const pct = Math.round((collected / TOTAL) * 100)
+      const collected = (snap.data()?.collected ?? []).filter(c => ALL_CODES.has(c)).length
+      const pct = Math.min(100, Math.round((collected / TOTAL) * 100))
       const fill = overlay.querySelector('#als-fill-wc2026')
       const txt  = overlay.querySelector('#als-txt-wc2026')
       if (fill) fill.style.width = pct + '%'
