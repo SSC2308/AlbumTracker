@@ -340,6 +340,30 @@ body {
   border-radius: 10px;
   text-align: center;
 }
+.login-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-raised);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+.login-tab {
+  flex: 1;
+  padding: 8px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.login-tab.act {
+  background: var(--surface);
+  color: var(--text-1);
+}
 
 /* ═══════════════════════════════════════════
    CARD

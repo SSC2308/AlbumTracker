@@ -1,26 +1,18 @@
-import { initializeApp } from 'firebase/app'
+import { firebaseApp } from './app.js'
 import {
   getFirestore, doc, onSnapshot, getDoc,
   setDoc, updateDoc, arrayUnion, arrayRemove, increment,
 } from 'firebase/firestore'
 
-const app = initializeApp({
-  apiKey:            'AIzaSyCjr2V6z4h12RJQhEixlCpNfTvqfv8H9IE',
-  authDomain:        'cletaeats-71879.firebaseapp.com',
-  projectId:         'cletaeats-71879',
-  storageBucket:     'cletaeats-71879.firebasestorage.app',
-  messagingSenderId: '250442768448',
-  appId:             '1:250442768448:web:79b1014b57652c27d63fa5',
-})
+const db = getFirestore(firebaseApp)
 
-const db  = getFirestore(app)
-const REF = doc(db, 'albums', 'mundial2026')
+// REF is set once per session via initDb()
+let REF = null
 
-/**
- * Subscribes to the album document.
- * Callback receives a Set<string> of collected codes.
- * Returns the Firestore unsubscribe function.
- */
+export function initDb(uid, albumId = 'wc2026') {
+  REF = doc(db, 'users', uid, 'albums', albumId)
+}
+
 /** cb(collected: Set<string>, dupes: {code: count}, trades: {id: trade}) */
 export const subscribe = (cb) =>
   onSnapshot(REF, snap => {
@@ -28,17 +20,10 @@ export const subscribe = (cb) =>
     cb(new Set(data.collected ?? []), data.dupes ?? {}, data.trades ?? {})
   })
 
-/**
- * Adds a sticker code. Uses setDoc+merge so the document
- * is created automatically on first write.
- */
-export const addSticker = (code) =>
-  setDoc(REF, { collected: arrayUnion(code) }, { merge: true })
+export const addSticker   = (code) => setDoc(REF, { collected: arrayUnion(code)    }, { merge: true })
+export const removeSticker = (code) => setDoc(REF, { collected: arrayRemove(code)   }, { merge: true })
 
-export const removeSticker = (code) =>
-  setDoc(REF, { collected: arrayRemove(code) }, { merge: true })
-
-/** Repetidas — usa Firestore increment para no pisar escrituras concurrentes */
+/** Repetidas */
 export const addDupe    = (code) => setDoc(REF, { dupes: { [code]: increment(1)  } }, { merge: true })
 export const removeDupe = (code) => setDoc(REF, { dupes: { [code]: increment(-1) } }, { merge: true })
 
@@ -59,10 +44,26 @@ export const completeTrade = (id) =>
 export const cancelTrade = (id) =>
   updateDoc(REF, { [`trades.${id}.status`]: 'cancelled' })
 
-/** Migración de códigos renombrados */
+/**
+ * Migración desde el esquema anterior (albums/mundial2026 → users/{uid}/albums/wc2026).
+ * Solo corre si el nuevo doc está vacío y el viejo existe.
+ */
+export async function migrateFromLegacy() {
+  if (!REF) return { migrated: false }
+  const newSnap = await getDoc(REF)
+  if (newSnap.exists() && (newSnap.data().collected ?? []).length > 0) return { migrated: false }
+
+  const legacyRef = doc(db, 'albums', 'mundial2026')
+  const oldSnap   = await getDoc(legacyRef)
+  if (!oldSnap.exists()) return { migrated: false }
+
+  await setDoc(REF, oldSnap.data())
+  return { migrated: true }
+}
+
+/** Migración de códigos renombrados (JAP→JPN, FW→FWC) */
 export async function migrateOldCodes() {
-  const RENAMES = { 'JAP': 'JPN', '00': 'FWC00' }
-  const FW_RE   = /^FW(\d+)$/   // FW1..FW19 → FWC1..FWC19
+  const FW_RE = /^FW(\d+)$/
 
   const snap = await getDoc(REF)
   const data = snap.data() ?? {}
@@ -71,23 +72,20 @@ export async function migrateOldCodes() {
 
   const newCollected = collected.map(c => {
     if (c === '00') return 'FWC00'
-    const fw = c.match(FW_RE)
-    if (fw) return `FWC${fw[1]}`
+    const fw = c.match(FW_RE); if (fw) return `FWC${fw[1]}`
     if (c.startsWith('JAP')) return 'JPN' + c.slice(3)
     return c
   })
 
   const newDupes = {}
   for (const [code, count] of Object.entries(dupes)) {
-    let newCode = code
-    if (code === '00') newCode = 'FWC00'
-    else { const fw = code.match(FW_RE); if (fw) newCode = `FWC${fw[1]}` }
-    if (code.startsWith('JAP')) newCode = 'JPN' + code.slice(3)
-    newDupes[newCode] = count
+    let nc = code
+    if (code === '00') nc = 'FWC00'
+    else { const fw = code.match(FW_RE); if (fw) nc = `FWC${fw[1]}` }
+    if (code.startsWith('JAP')) nc = 'JPN' + code.slice(3)
+    newDupes[nc] = count
   }
 
   await setDoc(REF, { collected: newCollected, dupes: newDupes })
-  return {
-    fixed: collected.filter((c, i) => c !== newCollected[i]).length
-  }
+  return { fixed: collected.filter((c, i) => c !== newCollected[i]).length }
 }
