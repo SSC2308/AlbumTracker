@@ -437,6 +437,8 @@ function confirmAll(el) {
   const checked = [...el.querySelectorAll('.ocr-chk:checked')]
   if (!checked.length) { toast('Nada seleccionado', 'dup'); return }
 
+  // Re-evaluate against current state at confirm time (not render time)
+  // so a Firebase sync between render and confirm doesn't misclassify codes.
   const current = get()
   const next    = new Set(current)
   let added = 0, duped = 0
@@ -444,8 +446,8 @@ function confirmAll(el) {
   checked.forEach(chk => {
     const code = chk.value
     if (!ALL_CODES.has(code)) return
-    if (chk.classList.contains('ocr-chk-dup')) {
-      // Ya la tiene — guardar como repetida
+    if (current.has(code)) {
+      // Ya la tiene según el estado actual — guardar como repetida
       addDupe(code)
       duped++
     } else if (!next.has(code)) {

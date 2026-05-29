@@ -32,8 +32,12 @@ function bootApp() {
     if (syncDot) { syncDot.className = 'sync-dot'; syncDot.title = 'Modo demo' }
   } else {
     subscribe((collected, dupes) => {
+      // Sanitize: drop any negative or zero counts that may have leaked in
+      const cleanDupes = Object.fromEntries(
+        Object.entries(dupes).filter(([, n]) => n > 0)
+      )
       setState(collected)
-      setDupes(dupes)
+      setDupes(cleanDupes)
       if (syncDot) { syncDot.className = 'sync-dot ok'; syncDot.title = `Sincronizado — ${collected.size} figuritas` }
     })
     if (syncDot) { syncDot.className = 'sync-dot busy'; syncDot.title = 'Conectando...' }

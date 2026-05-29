@@ -1,7 +1,7 @@
-import { getDupes, onDupes } from '../state.js'
-import { GROUPS } from '../data/stickers.js'
+import { get, getDupes, onDupes, set as setState } from '../state.js'
+import { GROUPS, ALL_CODES } from '../data/stickers.js'
 import { parseList, formatExportList } from '../utils/parseList.js'
-import { removeDupe } from '../firebase/db.js'
+import { addSticker, addDupe, removeDupe } from '../firebase/db.js'
 import { toast } from '../utils/toast.js'
 
 const GROUP_COLORS = {
@@ -47,6 +47,40 @@ export function mount(el) {
         <div id="rep-compare-result" style="margin-top:16px"></div>
       </div>
     </div>
+
+    <div class="card" id="rep-trade-card">
+      <div class="ing-bulk-toggle" id="rep-trade-toggle">
+        <span class="ing-bulk-label">Nuevo intercambio</span>
+        <span class="ing-bulk-arrow" id="rep-trade-arrow">&#9660;</span>
+      </div>
+      <div id="rep-trade-body" style="display:none;padding-top:12px">
+
+        <input id="rep-trade-name" class="ing-input" type="text"
+          placeholder="Nombre (ej: Juan)"
+          autocomplete="off" autocorrect="off" autocapitalize="words"
+          style="margin-bottom:18px;width:100%;box-sizing:border-box">
+
+        <p class="trade-section-lbl">Lo que doy — mis repetidas que me pide</p>
+        <textarea id="rep-trade-give-txt" class="bulk-inp"
+          placeholder="MEX 🇲🇽: 5, 13&#10;KOR 🇰🇷: 7, 16"></textarea>
+        <button class="btn btn-s btn-full" id="rep-trade-give-btn" style="margin-top:8px">
+          Ver cuales tengo
+        </button>
+        <div id="rep-trade-give-result" style="margin-top:12px"></div>
+
+        <p class="trade-section-lbl" style="margin-top:20px">Lo que recibo</p>
+        <textarea id="rep-trade-recv-txt" class="bulk-inp"
+          placeholder="ARG 🇦🇷: 2, 8&#10;BRA 🇧🇷: 11"></textarea>
+        <button class="btn btn-s btn-full" id="rep-trade-recv-btn" style="margin-top:8px">
+          Ver preview
+        </button>
+        <div id="rep-trade-recv-result" style="margin-top:12px"></div>
+
+        <button class="btn btn-p btn-full" id="rep-trade-confirm" style="margin-top:20px">
+          ✓ Confirmar intercambio
+        </button>
+      </div>
+    </div>
   `
 
   el.querySelector('#rep-export').addEventListener('click', exportToClipboard)
@@ -64,13 +98,32 @@ export function mount(el) {
     renderCompareResult(el, matches)
   })
 
+  // Collapsible trade
+  let tradeOpen = false
+  el.querySelector('#rep-trade-toggle').addEventListener('click', () => {
+    tradeOpen = !tradeOpen
+    el.querySelector('#rep-trade-body').style.display = tradeOpen ? 'block' : 'none'
+    el.querySelector('#rep-trade-arrow').classList.toggle('open', tradeOpen)
+  })
+  el.querySelector('#rep-trade-give-btn').addEventListener('click', () => {
+    const text = el.querySelector('#rep-trade-give-txt').value
+    const matches = compareList(text)
+    renderTradeGive(el, matches)
+  })
+  el.querySelector('#rep-trade-recv-btn').addEventListener('click', () => {
+    const text = el.querySelector('#rep-trade-recv-txt').value
+    renderTradeRecv(el, parseList(text))
+  })
+  el.querySelector('#rep-trade-confirm').addEventListener('click', () => confirmTrade(el))
+
   onDupes(() => render())
   render()
 }
 
 function exportToClipboard() {
+  const collected = get()
   const active = Object.fromEntries(
-    Object.entries(getDupes()).filter(([, n]) => n > 0)
+    Object.entries(getDupes()).filter(([code, n]) => n > 0 && collected.has(code))
   )
   if (!Object.keys(active).length) { toast('No hay repetidas', 'dup'); return }
 
@@ -85,8 +138,9 @@ function exportToClipboard() {
 }
 
 function compareList(text) {
-  const dupes = getDupes()
-  return parseList(text).filter(code => (dupes[code] ?? 0) > 0)
+  const dupes     = getDupes()
+  const collected = get()
+  return parseList(text).filter(code => (dupes[code] ?? 0) > 0 && collected.has(code))
 }
 
 function renderCompareResult(el, matches) {
@@ -124,20 +178,120 @@ function renderCompareResult(el, matches) {
   resultEl.querySelector('#rep-compare-give').addEventListener('click', () => {
     const selected = [...resultEl.querySelectorAll('.rep-give-chk:checked')].map(c => c.value)
     if (!selected.length) { toast('Nada seleccionado', 'dup'); return }
-    selected.forEach(code => removeDupe(code))
+    selected.forEach(code => {
+      if ((getDupes()[code] ?? 0) > 0) removeDupe(code)
+    })
     toast(`${selected.length} repetida${selected.length > 1 ? 's' : ''} eliminada${selected.length > 1 ? 's' : ''}`, 'ok')
     resultEl.innerHTML = ''
     el.querySelector('#rep-compare-txt').value = ''
   })
 }
 
+/* ── Trade: lo que doy ── */
+function renderTradeGive(el, matches) {
+  const resultEl = el.querySelector('#rep-trade-give-result')
+  if (!matches.length) {
+    resultEl.innerHTML = `<p style="color:var(--text-3);font-size:13px">No tengo ninguna repetida de esa lista.</p>`
+    return
+  }
+  let html = `<p style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
+    Puedo darle — ${matches.length}
+  </p>`
+  html += `<div style="display:flex;flex-wrap:wrap;gap:8px">`
+  html += matches.map(c => `
+    <label class="rep-give-label">
+      <input type="checkbox" class="trade-give-chk" value="${c}" checked style="accent-color:var(--accent)">
+      <span>${c}</span>
+    </label>`).join('')
+  html += `</div>`
+  resultEl.innerHTML = html
+}
+
+/* ── Trade: lo que recibo ── */
+function renderTradeRecv(el, codes) {
+  const resultEl = el.querySelector('#rep-trade-recv-result')
+  if (!codes.length) { resultEl.innerHTML = ''; return }
+
+  const collected = get()
+  const valid     = codes.filter(c => ALL_CODES.has(c))
+  const newOnes   = valid.filter(c => !collected.has(c))
+  const already   = valid.filter(c =>  collected.has(c))
+  const invalid   = codes.filter(c => !ALL_CODES.has(c))
+
+  let html = ''
+  if (newOnes.length) {
+    html += `<p style="font-size:11px;font-weight:700;color:var(--ok);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">
+      Nuevas para el album — ${newOnes.length}
+    </p>`
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">`
+    html += newOnes.map(c => `<span class="chip-tag" style="background:var(--ok-lo);color:var(--ok)">${c}</span>`).join('')
+    html += `</div>`
+  }
+  if (already.length) {
+    html += `<p style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">
+      Ya las tengo (van como repetida) — ${already.length}
+    </p>`
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">`
+    html += already.map(c => `<span class="chip-tag chip-dup">${c}</span>`).join('')
+    html += `</div>`
+  }
+  if (invalid.length) {
+    html += `<p style="font-size:11px;color:var(--text-3);margin-bottom:4px">No reconocidas: ${invalid.join(', ')}</p>`
+  }
+  resultEl.innerHTML = html
+}
+
+/* ── Trade: confirmar ── */
+function confirmTrade(el) {
+  const name = el.querySelector('#rep-trade-name').value.trim()
+
+  const give = [...el.querySelectorAll('.trade-give-chk:checked')].map(c => c.value)
+  const recv = parseList(el.querySelector('#rep-trade-recv-txt').value)
+
+  if (!give.length && !recv.length) { toast('Nada para confirmar', 'dup'); return }
+
+  // Dar: bajar repetidas seleccionadas
+  give.forEach(code => {
+    if ((getDupes()[code] ?? 0) > 0) removeDupe(code)
+  })
+
+  // Recibir: agregar al album o como repetida
+  const collected = get()
+  const next = new Set(collected)
+  recv.forEach(code => {
+    if (!ALL_CODES.has(code)) return
+    if (collected.has(code)) {
+      addDupe(code)
+    } else {
+      next.add(code)
+      addSticker(code)
+    }
+  })
+  if (next.size > collected.size) setState(next)
+
+  // Resumen
+  const parts = []
+  if (give.length) parts.push(`${give.length} dada${give.length > 1 ? 's' : ''}`)
+  if (recv.length) parts.push(`${recv.length} recibida${recv.length > 1 ? 's' : ''}`)
+  toast(`Intercambio${name ? ` con ${name}` : ''} — ${parts.join(', ')}`, 'ok')
+
+  // Resetear formulario
+  el.querySelector('#rep-trade-name').value        = ''
+  el.querySelector('#rep-trade-give-txt').value    = ''
+  el.querySelector('#rep-trade-recv-txt').value    = ''
+  el.querySelector('#rep-trade-give-result').innerHTML = ''
+  el.querySelector('#rep-trade-recv-result').innerHTML = ''
+}
+
 function render() {
   if (!container) return
-  const dupes = getDupes()
+  const dupes     = getDupes()
+  const collected = get()   // import { get } already at top
 
-  // Filtrar solo los que tienen count > 0
+  // Solo contar repetidas de figuritas que también estén en el álbum.
+  // Si hay un code en dupes pero no en collected es un dato fantasma.
   const active = Object.fromEntries(
-    Object.entries(dupes).filter(([, n]) => n > 0)
+    Object.entries(dupes).filter(([code, n]) => n > 0 && collected.has(code))
   )
 
   const totalCodes = Object.keys(active).length
@@ -200,6 +354,8 @@ function render() {
     btn.addEventListener('click', e => {
       e.stopPropagation()
       const code = btn.dataset.code
+      // Guard: never go below 0 (double-tap protection)
+      if ((getDupes()[code] ?? 0) <= 0) return
       removeDupe(code)
       toast(`${code} — 1 repetida menos`, 'dup')
     })
